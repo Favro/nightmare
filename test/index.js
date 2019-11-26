@@ -1,4 +1,5 @@
 /* global it, describe, before, beforeEach, after, afterEach */
+/* eslint-disable no-console */
 
 /**
  * Module dependencies.
@@ -528,12 +529,13 @@ describe('Nightmare', function() {
       Nightmare.action(
         'monitorRequest',
         function(name, options, parent, win, renderer, done) {
-          win.webContents.session.webRequest.onBeforeRequest(
-            ['*://localhost:*'],
-            function(details, callback) {
-              callback({ cancel: false })
-            }
-          )
+          win.webContents.session.webRequest.onBeforeRequest(function(
+            details,
+            callback
+          ) {
+            callback({ cancel: false })
+            win.webContents.session.webRequest.onBeforeRequest(null)
+          })
           done()
         },
         function(done) {
@@ -551,12 +553,13 @@ describe('Nightmare', function() {
       Nightmare.action(
         'monitorRequest',
         function(name, options, parent, win, renderer, done) {
-          win.webContents.session.webRequest.onBeforeRequest(
-            ['*://localhost:*'],
-            function(details, callback) {
-              callback({ cancel: false })
-            }
-          )
+          win.webContents.session.webRequest.onBeforeRequest(function(
+            details,
+            callback
+          ) {
+            callback({ cancel: false })
+            win.webContents.session.webRequest.onBeforeRequest(null)
+          })
           done()
         },
         function(done) {
@@ -622,13 +625,15 @@ describe('Nightmare', function() {
       Nightmare.action(
         'abortRequests',
         function(name, options, parent, win, renderer, done) {
-          win.webContents.session.webRequest.onBeforeRequest(
-            ['*://localhost:*'],
-            function(details, callback) {
-              setTimeout(() => win.webContents.stop(), 0)
-              callback({ cancel: false })
-            }
-          )
+          win.webContents.session.webRequest.onBeforeRequest(function(
+            details,
+            callback
+          ) {
+            console.log('SSSSSTTTOOOOPPPPIIIINNNNNGGG', details.url)
+            setTimeout(() => win.webContents.stop(), 0)
+            callback({ cancel: false })
+            win.webContents.session.webRequest.onBeforeRequest(null)
+          })
           done()
         },
         function() {}
@@ -1203,7 +1208,7 @@ describe('Nightmare', function() {
     beforeEach(function() {
       nightmare = Nightmare({
         webPreferences: { partition: 'test-partition' }
-      }).goto(fixture('cookie'))
+      }).goto(fixture('cookies'))
     })
 
     afterEach(function*() {
@@ -1213,7 +1218,10 @@ describe('Nightmare', function() {
     it('.set(name, value) & .get(name)', function*() {
       var cookies = nightmare.cookies
 
-      yield cookies.set('hi', 'hello')
+      for (let i = 0; i < 100; ++i) {
+        yield cookies.set('hi', 'hello')
+        yield nightmare.wait(1000)
+      }
       var cookie = yield cookies.get('hi')
 
       cookie.name.should.equal('hi')
@@ -1380,7 +1388,7 @@ describe('Nightmare', function() {
       var cookies = yield nightmare.cookies.get()
       cookies.length.should.equal(0)
 
-      yield nightmare.goto(fixture('cookie'))
+      yield nightmare.goto(fixture('cookies'))
 
       cookies = yield nightmare.cookies.get()
       cookies.length.should.equal(0)
@@ -1388,7 +1396,7 @@ describe('Nightmare', function() {
 
     it('should return a proper error', function*() {
       try {
-        yield nightmare.goto(fixture('cookie')).cookies.set({
+        yield nightmare.goto(fixture('cookies')).cookies.set({
           name: 'hi',
           value: 'there',
           domain: 'https://www.google.com'
